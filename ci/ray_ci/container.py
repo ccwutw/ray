@@ -1,18 +1,13 @@
 import os
 import subprocess
-import sys
 
 from typing import List
-
-import ci.ray_ci.bazel_sharding as bazel_sharding
 
 _DOCKER_ECR_REPO = os.environ.get(
     "RAYCI_WORK_REPO",
     "029272617770.dkr.ecr.us-west-2.amazonaws.com/rayproject/citemp",
 )
-_RAYCI_BUILD_ID = os.environ.get("RAYCI_BUILD_ID", "unknown")
-_PIPELINE_POSTMERGE = "0189e759-8c96-4302-b6b5-b4274406bf89"
-DOCKER_ENV = [
+_DOCKER_ENV = [
     "BUILDKITE_BUILD_URL",
     "BUILDKITE_BRANCH",
     "BUILDKITE_COMMIT",
@@ -20,11 +15,13 @@ DOCKER_ENV = [
     "BUILDKITE_LABEL",
     "BUILDKITE_PIPELINE_ID",
 ]
-DOCKER_CAP_ADD = [
+_DOCKER_CAP_ADD = [
     "SYS_PTRACE",
     "SYS_ADMIN",
     "NET_ADMIN",
 ]
+_RAYCI_BUILD_ID = os.environ.get("RAYCI_BUILD_ID", "unknown")
+
 
 class Container:
     """
@@ -38,8 +35,7 @@ class Container:
         """
         Run a script in container
         """
-        return subprocess.check_output(self.get_run_command(script))
-
+        return subprocess.check_output(self._get_run_command(script))
 
     def _get_run_command(self, script: str) -> List[str]:
         command = [
@@ -48,21 +44,23 @@ class Container:
             "-i",
             "--rm",
             "--volume",
-            "/tmp/artifacts:/artifact-mount"
+            "/tmp/artifacts:/artifact-mount",
         ]
-        for env in DOCKER_ENV:
+        for env in _DOCKER_ENV:
             command += ["--env", env]
-        for cap in DOCKER_CAP_ADD:
+        for cap in _DOCKER_CAP_ADD:
             command += ["--cap-add", cap]
         command += [
             "--workdir",
             "/rayci",
             "--shm-size=2.5gb",
             self._get_docker_image(),
-            "/bin/bash", 
-            "-ice", 
-            script
+            "/bin/bash",
+            "-ice",
+            script,
         ]
+
+        return command
 
     def _get_docker_image(self) -> str:
         """
