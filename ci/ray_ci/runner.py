@@ -6,12 +6,7 @@ from typing import List, Optional
 import yaml
 import click
 
-from ci.ray_ci.container import (
-    run_tests,
-    run_script_in_docker,
-    setup_test_environment,
-    shard_tests,
-)
+from ci.ray_ci.test_container import TestContainer
 from ci.ray_ci.utils import logger
 
 # Gets the path of product/tools/docker (i.e. the parent of 'common')
@@ -65,20 +60,29 @@ def main(
         raise Exception("Please use `bazelisk run //ci/ray_ci`")
     os.chdir(bazel_workspace_dir)
 
-    setup_test_environment(team)
+    container = TestContainer(team)
+    container.setup_test_environment()
     if run_flaky_tests:
         test_targets = _get_flaky_test_targets(team)
     else:
-        test_targets = _get_test_targets(targets, team, workers, worker_id, except_tags)
+        test_targets = _get_test_targets(
+            container, 
+            targets, 
+            team, 
+            workers, 
+            worker_id, 
+            except_tags,
+        )
     if not test_targets:
         logging.info("No tests to run")
         return
     logger.info(f"Running tests: {test_targets}")
-    success = run_tests(team, test_targets, parallelism_per_worker)
+    success = container.run_tests(team, test_targets, parallelism_per_worker)
     sys.exit(0 if success else 1)
 
 
 def _get_test_targets(
+    container: TestContainer,
     targets: str,
     team: str,
     workers: int,
@@ -89,8 +93,8 @@ def _get_test_targets(
     """
     Get test targets to run for a particular shard
     """
-    return shard_tests(
-        _get_all_test_targets(targets, team, except_tags, yaml_dir=yaml_dir),
+    return container.shard_tests(
+        _get_all_test_targets(container, targets, team, except_tags, yaml_dir=yaml_dir),
         workers,
         worker_id,
     )
@@ -115,6 +119,7 @@ def _get_all_test_query(targets: List[str], team: str, except_tags: str) -> str:
 
 
 def _get_all_test_targets(
+    container: TestContainer,
     targets: str,
     team: str,
     except_tags: Optional[str] = "",
@@ -125,7 +130,7 @@ def _get_all_test_targets(
     """
 
     test_targets = (
-        run_script_in_docker(
+        container.run_script(
             f'bazel query "{_get_all_test_query(targets, team, except_tags)}"',
             team,
         )
