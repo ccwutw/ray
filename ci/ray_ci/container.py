@@ -1,7 +1,9 @@
 import os
 import subprocess
 
-from typing import List
+from typing import List, Optional
+
+from ci.ray_ci.utils import docker_login
 
 _DOCKER_ECR_REPO = os.environ.get(
     "RAYCI_WORK_REPO",
@@ -28,8 +30,10 @@ class Container:
     A wrapper for running commands in ray ci docker container
     """
 
-    def __init__(self, docker_tag: str) -> None:
+    def __init__(self, docker_tag: str, volumes: Optional[List[str]] = None) -> None:
+        docker_login(_DOCKER_ECR_REPO.split("/")[0])
         self.docker_tag = docker_tag
+        self.volumes = volumes or []
 
     def run_script(self, script: str) -> bytes:
         """
@@ -46,6 +50,8 @@ class Container:
             "--volume",
             "/tmp/artifacts:/artifact-mount",
         ]
+        for volume in self.volumes:
+            command += ["--volume", volume]
         for env in _DOCKER_ENV:
             command += ["--env", env]
         for cap in _DOCKER_CAP_ADD:

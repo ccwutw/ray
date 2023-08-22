@@ -26,7 +26,9 @@ def test_run_script_in_docker() -> None:
         input_str = " ".join(input)
         assert "/bin/bash -ice run command" in input_str
 
-    with mock.patch("subprocess.check_output", side_effect=_mock_check_output):
+    with mock.patch(
+        "subprocess.check_output", side_effect=_mock_check_output
+    ), mock.patch("ci.ray_ci.container.docker_login", return_value=None):
         container = TestContainer("team")
         container.run_script("run command")
 
@@ -41,8 +43,9 @@ def test_run_tests() -> None:
     with mock.patch(
         "ci.ray_ci.test_container.TestContainer._run_tests_in_docker",
         side_effect=_mock_run_tests_in_docker,
-    ), mock.patch(
-        "ci.ray_ci.test_container.shard_tests", side_effect=_mock_shard_tests
+    ), mock.patch("ci.ray_ci.container.docker_login", return_value=None,), mock.patch(
+        "ci.ray_ci.test_container.shard_tests",
+        side_effect=_mock_shard_tests,
     ):
         container = TestContainer("team")
         # test_targets are not empty

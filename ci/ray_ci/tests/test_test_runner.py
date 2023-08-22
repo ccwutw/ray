@@ -36,6 +36,8 @@ def test_get_test_targets() -> None:
         with mock.patch(
             "ci.ray_ci.test_runner.shard_tests", side_effect=_mock_shard_tests
         ), mock.patch(
+            "ci.ray_ci.container.docker_login", return_value=None
+        ), mock.patch(
             "subprocess.check_output",
             return_value="\n".join(test_targets).encode("utf-8"),
         ):

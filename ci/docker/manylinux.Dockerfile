@@ -7,6 +7,7 @@ ARG BUILDKITE_BAZEL_CACHE_URL
 ENV BUILD_JAR=1
 ENV RAY_INSTALL_JAVA=1
 ENV BUILDKITE_BAZEL_CACHE_URL=$BUILDKITE_BAZEL_CACHE_URL
+ENV PATH=/opt/python/cp38-cp38/bin:$PATH
 
 COPY ci/build/build-manylinux-forge.sh /tmp/build-manylinux-forge.sh
 RUN /tmp/build-manylinux-forge.sh

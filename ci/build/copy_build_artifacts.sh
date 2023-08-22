@@ -19,7 +19,6 @@ else
   ARTIFACT_PATH=".jar/linux"
 fi
 
-export PATH=/opt/python/cp38-cp38/bin:$PATH
 pip install -q aws_requests_auth boto3
 ./ci/env/env_info.sh
 
