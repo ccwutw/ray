@@ -1,0 +1,8 @@
+name: "raybase"
+froms: ["ubuntu:focal"]
+dockerfile: docker/base-deps/Dockerfile
+srcs: []
+build_args:
+  - PYTHON_VERSION=3.8
+tags:
+  - cr.ray.io/rayproject/raybase
