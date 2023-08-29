@@ -1,5 +1,18 @@
 group: data tests
 steps:
+  - label: ":database: data: arrrow 6 tests"
+    instance_type: medium
+    parallelism: 3
+    commands:
+      - bazel run //ci/ray_ci:test -- //python/ray/data/... //python/ray/air/... data 
+        --workers "$${BUILDKITE_PARALLEL_JOB_COUNT}" 
+        --worker-id "$${BUILDKITE_PARALLEL_JOB}" --parallelism-per-worker 3
+        --build-name data6build
+        --test-env RAY_DATA_USE_STREAMING_EXECUTOR=1
+        --except-tags data_integration,doctest
+    depends_on: data6build
+    job_env: data6build
+
   - label: ":database: data: arrrow 12 tests"
     instance_type: medium
     parallelism: 3
@@ -13,6 +26,28 @@ steps:
     depends_on: data12build
     job_env: data12build
 
+  - label: ":database: data: arrrow nightly tests"
+    instance_type: medium
+    parallelism: 3
+    commands:
+      - bazel run //ci/ray_ci:test -- //python/ray/data/... //python/ray/air/... data 
+        --workers "$${BUILDKITE_PARALLEL_JOB_COUNT}" 
+        --worker-id "$${BUILDKITE_PARALLEL_JOB}" --parallelism-per-worker 3
+        --build-name datanbuild
+        --test-env RAY_DATA_USE_STREAMING_EXECUTOR=1
+        --except-tags data_integration,doctest
+    depends_on: datanbuild
+    job_env: datanbuild
+
+  - label: ":database: data: arrorw 6 flaky tests"
+    instance_type: medium
+    soft_fail: true
+    commands:
+      - bazel run //ci/ray_ci:test -- //... data --run-flaky-tests --parallelism-per-worker 3
+        --build-name data6build
+    depends_on: data6build
+    job_env: data6build
+
   - label: ":database: data: arrorw 12 flaky tests"
     instance_type: medium
     soft_fail: true
@@ -21,3 +56,12 @@ steps:
         --build-name data12build
     depends_on: data12build
     job_env: data12build
+
+  - label: ":database: data: arrorw nightly flaky tests"
+    instance_type: medium
+    soft_fail: true
+    commands:
+      - bazel run //ci/ray_ci:test -- //... data --run-flaky-tests --parallelism-per-worker 3
+        --build-name datanbuild
+    depends_on: datanbuild
+    job_env: datanbuild
